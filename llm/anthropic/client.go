@@ -16,9 +16,10 @@ var _ llm.LLMClient = (*AnthropicClient)(nil)
 const defaultMaxTokens = 1024
 
 type AnthropicClient struct {
-	apiKey    string
-	Model     string
-	MaxTokens *int
+	apiKey     string
+	Model      string
+	MaxTokens  *int
+	httpClient *http.Client
 }
 
 func NewAnthropicClient(apiKey string, Model string, MaxTokens *int) (*AnthropicClient, error) {
@@ -40,9 +41,10 @@ func NewAnthropicClient(apiKey string, Model string, MaxTokens *int) (*Anthropic
 	}
 
 	return &AnthropicClient{
-		apiKey:    apiKey,
-		Model:     Model,
-		MaxTokens: MaxTokens,
+		apiKey:     apiKey,
+		Model:      Model,
+		MaxTokens:  MaxTokens,
+		httpClient: &http.Client{},
 	}, nil
 }
 
@@ -79,8 +81,7 @@ func (c *AnthropicClient) Run(prompt string) ([]llm.Message, error) {
 	req.Header.Set("x-api-key", c.apiKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return []llm.Message{}, err
 	}

@@ -1,0 +1,46 @@
+package httputil
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+)
+
+func Do(client *http.Client, url string, method string, headers map[string]string, body any) ([]byte, error) {
+	jsonRequestData, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		method, url, bytes.NewBuffer(jsonRequestData),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %s", err)
+	}
+
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error request to [%s]: %s", url, err)
+	}
+
+	// _ is actually an error but a close error is almost never actionable
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status: %s", resp.Status)
+	}
+
+	byteResp, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response bytes: %s", err)
+	}
+
+	return byteResp, nil
+}
