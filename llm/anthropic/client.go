@@ -1,12 +1,11 @@
 package anthropic
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
+	"github.com/giyanellow/go-llm/internal/httputil"
 	"github.com/giyanellow/go-llm/llm"
 )
 
@@ -63,42 +62,19 @@ func (c *AnthropicClient) Run(prompt string) ([]llm.Message, error) {
 		MaxTokens: *c.MaxTokens,
 	}
 
-	jsonRequestData, err := json.Marshal(requestBody)
-	if err != nil {
-		return []llm.Message{}, err
+	requestHeaders := map[string]string{
+		"content-type":      "application/json",
+		"x-api-key":         c.apiKey,
+		"anthropic-version": "2023-06-01",
 	}
 
-	req, err := http.NewRequest(
-		"POST",
-		chatBaseUrl,
-		bytes.NewBuffer(jsonRequestData),
-	)
+	resp, err := httputil.Do(c.httpClient, chatBaseUrl, "POST", requestHeaders, requestBody)
 	if err != nil {
 		return []llm.Message{}, err
-	}
-
-	req.Header.Set("content-type", "application/json")
-	req.Header.Set("x-api-key", c.apiKey)
-	req.Header.Set("anthropic-version", "2023-06-01")
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return []llm.Message{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response:", err)
-		return []llm.Message{}, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return []llm.Message{}, fmt.Errorf("unexpected status: %s", resp.Status)
 	}
 
 	var llmResponse anthropicResponseBody
-	err = json.Unmarshal(body, &llmResponse)
+	err = json.Unmarshal(resp, &llmResponse)
 	if err != nil {
 		return []llm.Message{}, fmt.Errorf("Error in parsing response: %s", err.Error())
 	}
