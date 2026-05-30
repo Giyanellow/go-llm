@@ -20,6 +20,7 @@ func LoadConfig() *Config {
 
 func TestNewNoMaxTokens(t *testing.T) {
 	model := "claude-haiku-4-5"
+	v := defaultMaxTokens
 
 	client, err := NewAnthropicClient(
 		LoadConfig().AnthropicAPIKey,
@@ -28,6 +29,10 @@ func TestNewNoMaxTokens(t *testing.T) {
 	)
 	if err != nil || client == nil {
 		t.Fatalf("failed to create client: %v", err)
+	}
+
+	if *client.MaxTokens != v {
+		t.Fatalf("failed to create client with proper max tokens, got %d", client.MaxTokens)
 	}
 }
 
