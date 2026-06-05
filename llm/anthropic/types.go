@@ -1,9 +1,12 @@
 package anthropic
 
+import "github.com/giyanellow/go-llm/llm/tools"
+
 type anthropicRequestBody struct {
-	Model     string             `json:"model"`
-	MaxTokens int                `json:"max_tokens,omitempty"`
-	Input     []anthropicMessage `json:"messages"`
+	Model     string                 `json:"model"`
+	MaxTokens int                    `json:"max_tokens,omitempty"`
+	Input     []anthropicMessage     `json:"messages"`
+	Tools     []tools.ToolDefinition `json:"tools,omitempty"`
 }
 
 type anthropicResponseBody struct {

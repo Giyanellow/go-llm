@@ -10,18 +10,13 @@ import (
 	"github.com/giyanellow/go-llm/llm/tools"
 )
 
-// community practice to declared unused var to satisfy LSP
-var _ llm.LLMClient = (*AnthropicClient)(nil)
-
 const defaultMaxTokens = 1024
-
 
 type clientConfig struct {
 	tools []tools.ToolDefinition
 }
 
 type ClientOption func(*clientConfig)
-
 
 func WithTools(tools ...tools.ToolDefinition) ClientOption {
 	return func(cfg *clientConfig) {
@@ -32,7 +27,7 @@ func WithTools(tools ...tools.ToolDefinition) ClientOption {
 type AnthropicClient struct {
 	apiKey     string
 	Model      string
-	Tools []tools.ToolDefinition
+	Tools      []tools.ToolDefinition
 	MaxTokens  *int
 	httpClient *http.Client
 }
@@ -63,7 +58,7 @@ func NewAnthropicClient(apiKey string, Model string, MaxTokens *int, opts ...Cli
 	return &AnthropicClient{
 		apiKey:     apiKey,
 		Model:      Model,
-		Tools: cfg.tools,
+		Tools:      cfg.tools,
 		MaxTokens:  MaxTokens,
 		httpClient: &http.Client{},
 	}, nil
@@ -82,6 +77,12 @@ func (c *AnthropicClient) Run(prompt string, specificTools ...tools.ToolDefiniti
 		Model:     c.Model,
 		Input:     messagesPayload,
 		MaxTokens: *c.MaxTokens,
+		Tools:     []tools.ToolDefinition{},
+	}
+
+	// fill blank anthropicRequestBody.tools
+	for _, tool := range specificTools {
+		requestBody.Tools = append(requestBody.Tools, tool)
 	}
 
 	requestHeaders := map[string]string{
@@ -117,5 +118,3 @@ func (c *AnthropicClient) Run(prompt string, specificTools ...tools.ToolDefiniti
 func (c *AnthropicClient) GetModel() string {
 	return c.Model
 }
-
-func 

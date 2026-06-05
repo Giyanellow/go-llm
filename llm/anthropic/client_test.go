@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/giyanellow/go-llm/llm/tools"
 	"github.com/joho/godotenv"
 )
 
@@ -50,6 +51,48 @@ func TestRun(t *testing.T) {
 	}
 
 	response, err := client.Run(content)
+	if err != nil {
+		t.Fatalf("failed to execute inference: %v", err)
+	}
+
+	// if len(response) == 0 {
+	// 	t.Fatalf("expected messages but got empty response")
+	// }
+
+	t.Logf("got response: %v", response)
+}
+
+func TestRunWithTools(t *testing.T) {
+	model := "claude-haiku-4-5"
+	content := "Write a simple haiku about anything"
+	additionToolInputSchema := tools.InputSchema{
+		Type: "object",
+		Properties: map[string]tools.ToolProperties{
+			"a": {
+				Type:        "int",
+				Description: "any integer",
+			},
+			"b": {
+				Type:        "int",
+				Description: "any integer",
+			},
+		},
+	}
+	additionTool := tools.ToolDefinition{
+		Name:        "additionTool",
+		Description: "a tool that adds two numbers together",
+		InputSchema: additionToolInputSchema,
+	}
+	client, err := NewAnthropicClient(
+		LoadConfig().AnthropicAPIKey,
+		model,
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("failed to create client: %v", err)
+	}
+
+	response, err := client.Run(content, WithTools([]tools.ToolDefinition{additionTool}))
 	if err != nil {
 		t.Fatalf("failed to execute inference: %v", err)
 	}
