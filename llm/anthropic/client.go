@@ -7,6 +7,7 @@ import (
 
 	"github.com/giyanellow/go-llm/internal/httputil"
 	"github.com/giyanellow/go-llm/llm"
+	"github.com/giyanellow/go-llm/llm/tools"
 )
 
 // community practice to declared unused var to satisfy LSP
@@ -14,14 +15,29 @@ var _ llm.LLMClient = (*AnthropicClient)(nil)
 
 const defaultMaxTokens = 1024
 
+
+type clientConfig struct {
+	tools []tools.ToolDefinition
+}
+
+type ClientOption func(*clientConfig)
+
+
+func WithTools(tools ...tools.ToolDefinition) ClientOption {
+	return func(cfg *clientConfig) {
+		cfg.tools = append(cfg.tools, tools...)
+	}
+}
+
 type AnthropicClient struct {
 	apiKey     string
 	Model      string
+	Tools []tools.ToolDefinition
 	MaxTokens  *int
 	httpClient *http.Client
 }
 
-func NewAnthropicClient(apiKey string, Model string, MaxTokens *int) (*AnthropicClient, error) {
+func NewAnthropicClient(apiKey string, Model string, MaxTokens *int, opts ...ClientOption) (*AnthropicClient, error) {
 	var err error
 	if apiKey == "" {
 		err = fmt.Errorf("API Key must be satisfied")
@@ -39,15 +55,21 @@ func NewAnthropicClient(apiKey string, Model string, MaxTokens *int) (*Anthropic
 		return nil, err
 	}
 
+	cfg := &clientConfig{}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
 	return &AnthropicClient{
 		apiKey:     apiKey,
 		Model:      Model,
+		Tools: cfg.tools,
 		MaxTokens:  MaxTokens,
 		httpClient: &http.Client{},
 	}, nil
 }
 
-func (c *AnthropicClient) Run(prompt string) ([]llm.Message, error) {
+func (c *AnthropicClient) Run(prompt string, specificTools ...tools.ToolDefinition) ([]llm.Message, error) {
 	// create input struct
 	messageInput := anthropicMessage{
 		Role:    "user",
@@ -95,3 +117,5 @@ func (c *AnthropicClient) Run(prompt string) ([]llm.Message, error) {
 func (c *AnthropicClient) GetModel() string {
 	return c.Model
 }
+
+func 

@@ -16,6 +16,8 @@ func WithInputExamples(examples ...map[string]string) ToolOption {
 	}
 }
 
+// Sample use:
+// addTool := CreateTool("addTool", "a tool that adds two numbers", schema, WithInputExamples{...})
 func CreateTool(name string, description string, schema InputSchema, opts ...ToolOption) (ToolDefinition, error) {
 	if schema.Type != "object" {
 		return ToolDefinition{}, fmt.Errorf("schema type must be 'object'")
