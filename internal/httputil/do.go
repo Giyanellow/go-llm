@@ -8,6 +8,7 @@ import (
 	"net/http"
 )
 
+// Same as http.Do but this builds the entire request - with body and headers
 func Do(client *http.Client, url string, method string, headers map[string]string, body any) ([]byte, error) {
 	jsonRequestData, err := json.Marshal(body)
 	if err != nil {
